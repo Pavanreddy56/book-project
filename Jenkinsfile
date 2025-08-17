@@ -21,15 +21,19 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                bat 'mvn clean package -DskipTests'
-                bat 'dir target'
+                dir('backend') {    // 👈 Go inside backend folder
+                    bat 'mvn clean package -DskipTests'
+                    bat 'dir target'
+                }
             }
         }
 
         stage('Prepare Docker Context') {
             steps {
-                bat 'copy target\\*.jar .'
-                bat 'dir'
+                dir('backend') {
+                    bat 'copy target\\*.jar ..'   // 👈 copy JAR to root for Docker
+                }
+                bat 'dir'  // Show root files for confirmation
             }
         }
 
@@ -64,3 +68,4 @@ pipeline {
         }
     }
 }
+
