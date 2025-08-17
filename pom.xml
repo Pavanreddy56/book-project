@@ -16,8 +16,7 @@
     <!-- Modules (child projects) -->
     <modules>
         <module>backend</module>
-        <!-- If you have frontend or other services, add them here -->
-        <!-- <module>frontend</module> -->
+        <module>frontend</module>
     </modules>
 
     <!-- Dependency Management (shared versions) -->
