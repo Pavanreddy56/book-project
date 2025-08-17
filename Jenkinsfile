@@ -9,7 +9,7 @@ pipeline {
     environment {
         BACKEND_IMAGE = "pavanreddych/book-backend"
         FRONTEND_IMAGE = "pavanreddych/book-frontend"
-        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -35,15 +35,15 @@ pipeline {
             steps {
                 script {
                     bat 'copy backend\\target\\*.jar backend-app.jar'
-                    bat 'xcopy /E /I /Y frontend\\dist frontend-dist'
+                    bat 'xcopy /E /I /Y frontend\\build frontend-dist'
                 }
             }
         }
 
         stage('Build Docker Images') {
             steps {
-                bat "docker build -f backend.Dockerfile -t %BACKEND_IMAGE%:%IMAGE_TAG% ."
-                bat "docker build -f frontend.Dockerfile -t %FRONTEND_IMAGE%:%IMAGE_TAG% ."
+                bat "docker build -f backend/Dockerfile -t %BACKEND_IMAGE%:%IMAGE_TAG% ."
+                bat "docker build -f frontend/Dockerfile -t %FRONTEND_IMAGE%:%IMAGE_TAG% ."
             }
         }
 
