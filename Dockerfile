@@ -1,23 +1,26 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
-
-# Set the working directory in the container
+# ==============================
+# Stage 1: Build with Maven
+# ==============================
+FROM maven:3.8.1-openjdk-11 AS builder
 WORKDIR /app
 
-# Copy the requirements file into the container
-COPY requirements.txt .
+# Copy pom.xml and download dependencies first (better caching)
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy source code and build
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the rest of the application code
-COPY . .
+# ==============================
+# Stage 2: Run Spring Boot
+# ==============================
+FROM openjdk:11-jre-slim
+ARG JAR_FILE=/app/target/*.jar
 
-# Make port 5000 available to the world outside this container
-EXPOSE 5000
+# Copy jar from builder
+COPY --from=builder ${JAR_FILE} /opt/bookapp/app.jar
 
-# Define environment variable
-ENV FLASK_APP=app.py
-
-# Run the application
-CMD ["flask", "run", "--host=0.0.0.0"]
+WORKDIR /opt/bookapp
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
