@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "pavanreddych/book-project1"
-        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -21,7 +21,7 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                dir('backend') {    // 👈 Go inside backend folder
+                dir('backend') {
                     bat 'mvn clean package -DskipTests'
                     bat 'dir target'
                 }
@@ -30,10 +30,11 @@ pipeline {
 
         stage('Prepare Docker Context') {
             steps {
+                // Copy JAR to root so Dockerfile can access it
                 dir('backend') {
-                    bat 'copy target\\*.jar ..'   // 👈 copy JAR to root for Docker
+                    bat 'copy target\\*.jar ..'
                 }
-                bat 'dir'  // Show root files for confirmation
+                bat 'dir'
             }
         }
 
@@ -54,6 +55,14 @@ pipeline {
                     bat "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
                     bat "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest"
                     bat "docker push ${IMAGE_NAME}:latest"
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    bat "docker run -d -p 9090:8080 --name book-app ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
