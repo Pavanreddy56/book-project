@@ -1,18 +1,22 @@
-FROM node:14-alpine
+# Use official Python image
+FROM python:3.9-slim
 
+# Set work directory
 WORKDIR /app
 
-COPY package.json .
-COPY yarn.lock .
-COPY start.sh .
+# Prevent Python from writing pyc files + enable unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-RUN yarn install
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application
 COPY . .
-EXPOSE 3000
 
-ARG PROFILE
-ENV profile_env ${PROFILE}
+# Expose Flask port
+EXPOSE 5000
 
-RUN apk add --no-cache --upgrade bash
-
-CMD ["./start.sh"]
+# Default command (use gunicorn for production)
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
