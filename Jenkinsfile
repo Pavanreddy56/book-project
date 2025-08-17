@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'    // Maven configured in Jenkins
-        jdk 'JDK17'       // JDK configured in Jenkins
+        maven 'Maven3'
+        jdk 'JDK17'
     }
 
     environment {
@@ -12,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout Source') {
             steps {
                 git branch: 'main', url: 'https://github.com/Pavanreddy56/book-project.git'
@@ -21,26 +20,28 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                // 👇 Run Maven from the root, it will build parent + backend
+                // Build both backend + frontend from parent POM
                 bat 'mvn clean package -DskipTests'
             }
         }
 
         stage('Prepare Docker Context') {
             steps {
-                dir('backend') {
-                    // 👇 Copy backend JAR to project root for Docker
-                    bat 'copy target\\*.jar ..'
+                script {
+                    // Copy backend JAR to root
+                    bat 'copy backend\\target\\*.jar .'
+
+                    // Copy frontend build output to root (assuming build/ folder)
+                    bat 'xcopy /E /I /Y frontend\\dist frontend-dist'
+
+                    bat 'dir'
                 }
-                bat 'dir'  // Show root files for confirmation
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                }
+                bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
@@ -56,25 +57,16 @@ pipeline {
                 }
             }
         }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    // Run on port 8081 instead of 8080 (since Jenkins uses 8080)
-                    bat "docker run -d -p 8081:8080 --name book-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}"
-                }
-            }
-        }
     }
 
     post {
         success {
             echo "✅ Deployment successful: ${IMAGE_NAME}:${IMAGE_TAG}"
-            echo "🌍 App running on http://localhost:8081"
         }
         failure {
             echo "❌ Build, analysis, or deployment failed"
         }
     }
 }
+
 
