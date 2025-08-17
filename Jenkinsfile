@@ -66,7 +66,7 @@ pipeline {
                 bat 'docker stop book-app || echo "No container running"'
                 bat 'docker rm book-app || echo "No container to remove"'
                 // Run new container on port 8080
-                bat "docker run -d --name book-app -p 8080:8080 %IMAGE_NAME%:%IMAGE_TAG%"
+                bat "docker run -d --name book-app -p 8084:8080 %IMAGE_NAME%:%IMAGE_TAG%"
             }
         }
     }
