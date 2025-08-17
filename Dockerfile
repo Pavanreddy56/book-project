@@ -1,24 +1,13 @@
-# ==============================
-# Stage 1: Build with Maven
-# ==============================
-FROM maven:3.8.1-openjdk-11 AS builder
+# Builder stage
+FROM maven:3.9.2-eclipse-temurin-17 AS builder
 WORKDIR /app
-
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package
 
-# ==============================
-# Stage 2: Run Spring Boot
-# ==============================
-FROM openjdk:11-jre-slim
-
+# Final stage
+FROM eclipse-temurin:17-jdk
+ARG JAR_FILE=target/book-app-0.0.1-SNAPSHOT.jar
+COPY --from=builder /app/${JAR_FILE} /opt/bookapp/app.jar
 WORKDIR /opt/bookapp
-
-# Copy the generated JAR from builder stage
-COPY --from=builder /app/target/*.jar app.jar
-
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]
