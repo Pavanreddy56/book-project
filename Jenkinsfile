@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "pavanreddych/book-project1"
-        IMAGE_TAG  = "${BUILD_NUMBER}"
+        IMAGE_TAG  = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -21,20 +21,18 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                dir('backend') {
-                    bat 'mvn clean package -DskipTests'
-                    bat 'dir target'
-                }
+                // 👇 Run Maven from the root, it will build parent + backend
+                bat 'mvn clean package -DskipTests'
             }
         }
 
         stage('Prepare Docker Context') {
             steps {
-                // Copy JAR to root so Dockerfile can access it
                 dir('backend') {
+                    // 👇 Copy backend JAR to project root for Docker
                     bat 'copy target\\*.jar ..'
                 }
-                bat 'dir'
+                bat 'dir'  // Show root files for confirmation
             }
         }
 
@@ -62,7 +60,8 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    bat "docker run -d -p 9090:8080 --name book-app ${IMAGE_NAME}:${IMAGE_TAG}"
+                    // Run on port 8081 instead of 8080 (since Jenkins uses 8080)
+                    bat "docker run -d -p 8081:8080 --name book-app-${BUILD_NUMBER} ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
@@ -71,6 +70,7 @@ pipeline {
     post {
         success {
             echo "✅ Deployment successful: ${IMAGE_NAME}:${IMAGE_TAG}"
+            echo "🌍 App running on http://localhost:8081"
         }
         failure {
             echo "❌ Build, analysis, or deployment failed"
