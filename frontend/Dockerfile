@@ -1,22 +1,14 @@
-# Use official Python image
-FROM python:3.9-slim
+# Use Nginx for serving static frontend files
+FROM nginx:alpine
 
-# Set work directory
-WORKDIR /app
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
 
-# Prevent Python from writing pyc files + enable unbuffered logging
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Copy built frontend files (copied from Jenkins pipeline)
+COPY frontend-dist/ /usr/share/nginx/html/
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Expose Nginx default port
+EXPOSE 80
 
-# Copy application
-COPY . .
-
-# Expose Flask port
-EXPOSE 5000
-
-# Default command (use gunicorn for production)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
